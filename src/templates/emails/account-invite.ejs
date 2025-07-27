@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to <%= enterpriseName %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8fafc;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .welcome-section {
+            margin-bottom: 30px;
+        }
+        
+        .welcome-section h2 {
+            color: #1f2937;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .welcome-section p {
+            color: #6b7280;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        
+        .credentials-box {
+            background-color: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        
+        .credentials-box h3 {
+            color: #374151;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .credential-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .credential-item:last-child {
+            border-bottom: none;
+        }
+        
+        .credential-label {
+            font-weight: 600;
+            color: #374151;
+            min-width: 100px;
+        }
+        
+        .credential-value {
+            font-family: 'Courier New', monospace;
+            background-color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            color: #1f2937;
+            font-weight: 600;
+        }
+        
+        .temp-password {
+            background-color: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+        
+        .action-section {
+            text-align: center;
+            margin: 32px 0;
+        }
+        
+        .login-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            text-decoration: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s ease;
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .info-section {
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+        
+        .info-section h4 {
+            color: #0369a1;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .info-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .info-section li {
+            color: #0c4a6e;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .info-section li:before {
+            content: "•";
+            color: #0369a1;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .footer p {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .footer a {
+            color: #6366f1;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .header, .content, .footer {
+                padding: 20px;
+            }
+            
+            .credential-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to <%= enterpriseName %></h1>
+            <p>Your account has been created successfully</p>
+        </div>
+        
+        <div class="content">
+            <div class="welcome-section">
+                <h2>Hello <%= userName %>,</h2>
+                <p>Welcome to <strong><%= enterpriseName %></strong>! Your account has been created and you're all set to get started.</p>
+                <p>You've been assigned the role of <strong><%= roleName %></strong> in our system.</p>
+                <% if (invitedBy) { %>
+                    <p>You were invited by <strong><%= invitedBy %></strong>.</p>
+                <% } %>
+            </div>
+            
+            <div class="credentials-box">
+                <h3>Your Login Credentials</h3>
+                <div class="credential-item">
+                    <span class="credential-label">Email:</span>
+                    <span class="credential-value"><%= userEmail %></span>
+                </div>
+                <div class="credential-item">
+                    <span class="credential-label">Temporary Password:</span>
+                    <span class="credential-value temp-password"><%= tempPassword %></span>
+                </div>
+            </div>
+            
+            <div class="action-section">
+                <a href="<%= loginUrl %>" class="login-button">Login to Your Account</a>
+            </div>
+            
+            <div class="info-section">
+                <h4>Important Information:</h4>
+                <ul>
+                    <li>Please change your password immediately after your first login</li>
+                    <li>Your temporary password is case-sensitive</li>
+                    <li>If you have any issues logging in, contact our support team</li>
+                    <li>Make sure to complete your profile setup after logging in</li>
+                </ul>
+            </div>
+            
+            <div class="welcome-section">
+                <h2>Getting Started</h2>
+                <p>Once you log in, you'll be able to:</p>
+                <ul style="color: #6b7280; margin-left: 20px; margin-top: 12px;">
+                    <li>Access your personalized dashboard</li>
+                    <li>Manage leads and opportunities</li>
+                    <li>Schedule and join meetings</li>
+                    <li>Track your performance metrics</li>
+                    <li>Collaborate with your team</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>If you have any questions or need assistance, please contact us at <a href="mailto:<%= supportEmail %>"><%= supportEmail %></a></p>
+            <p>This is an automated message from <%= enterpriseName %>. Please do not reply to this email.</p>
+            <p style="margin-top: 16px; font-size: 12px; color: #9ca3af;">
+                © <%= new Date().getFullYear() %> <%= enterpriseName %>. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html> 
