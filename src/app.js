@@ -58,6 +58,16 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Root endpoint for health checks
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    message: 'RevUp Backend API is running',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/enterprise', enterpriseRoutes);
