@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 const authService = require('../services/authService');
 const supabase = require('../config/supabase');
+const axios = require('axios');
 
 // Create new enterprise
 const createEnterprise = async (req, res) => {
@@ -477,6 +478,264 @@ const getEnterpriseUserById = async (req, res) => {
   }
 };
 
+// Store or update lead fields configuration for an enterprise
+const storeLeadFields = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { leadFields } = req.body;
+
+    if (!leadFields || typeof leadFields !== 'object') {
+      return res.status(400).json({
+        success: false,
+        message: 'leadFields (object) is required in request body'
+      });
+    }
+
+    const { data: config, error } = await supabase
+      .from('enterprise_configs')
+      .upsert({
+        enterprise_id: id,
+        config_type: 'lead_fields',
+        config_data: leadFields,
+        is_active: true
+      }, { onConflict: 'enterprise_id,config_type' })
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      message: 'Lead fields saved successfully',
+      data: { config }
+    });
+  } catch (error) {
+    console.error('Store lead fields error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error saving lead fields'
+    });
+  }
+};
+
+// Store or update lead qualification rules for an enterprise
+const storeQualificationRules = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rules } = req.body;
+
+    if (!rules || typeof rules !== 'object') {
+      return res.status(400).json({
+        success: false,
+        message: 'rules (object) is required in request body'
+      });
+    }
+
+    const { data: config, error } = await supabase
+      .from('enterprise_configs')
+      .upsert({
+        enterprise_id: id,
+        config_type: 'lead_qualification_rules',
+        config_data: rules,
+        is_active: true
+      }, { onConflict: 'enterprise_id,config_type' })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ success: true, message: 'Qualification rules saved', data: { config } });
+  } catch (error) {
+    console.error('Store qualification rules error:', error);
+    res.status(500).json({ success: false, message: 'Error saving qualification rules' });
+  }
+};
+
+// Retrieve lead fields configuration for an enterprise
+const getLeadFields = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: config, error } = await supabase
+      .from('enterprise_configs')
+      .select('config_data')
+      .eq('enterprise_id', id)
+      .eq('config_type', 'lead_fields')
+      .eq('is_active', true)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116' || error.code === '22P02') {
+        return res.status(404).json({
+          success: false,
+          message: 'Lead fields configuration not found'
+        });
+      }
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      data: config?.config_data || {}
+    });
+  } catch (error) {
+    console.error('Get lead fields error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching lead fields'
+    });
+  }
+};
+
+// Retrieve qualification rules configuration for an enterprise
+const getQualificationRules = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: config, error } = await supabase
+      .from('enterprise_configs')
+      .select('config_data')
+      .eq('enterprise_id', id)
+      .eq('config_type', 'lead_qualification_rules')
+      .eq('is_active', true)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116' || error.code === '22P02') {
+        return res.status(404).json({ success: false, message: 'Qualification rules not found' });
+      }
+      throw error;
+    }
+
+    res.json({ success: true, data: config?.config_data || {} });
+  } catch (error) {
+    console.error('Get qualification rules error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching qualification rules' });
+  }
+};
+
+// Retrieve unselected lead fields configuration for an enterprise
+const getSelectedLeadFields = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data: config, error } = await supabase
+      .from('enterprise_configs')
+      .select('config_data')
+      .eq('enterprise_id', id)
+      .eq('config_type', 'lead_fields')
+      .eq('is_active', true)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116' || error.code === '22P02') {
+        return res.status(404).json({
+          success: false,
+          message: 'Lead fields configuration not found'
+        });
+      }
+      throw error;
+    }
+
+    const allFields = config?.config_data || {};
+    const unselected = Object.fromEntries(
+      Object.entries(allFields).filter(([key, value]) => value?.required)
+    );
+
+    res.json({ success: true, data: unselected });
+  } catch (error) {
+    console.error('Get unselected lead fields error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching unselected lead fields'
+    });
+  }
+};
+
+// Refresh lead fields from HubSpot and update enterprise_configs
+const refreshLeadFieldsFromHubspot = async (req, res) => {
+  try {
+    const { id } = req.params; // enterprise ID
+    console.log('id', id);
+    // 1. Fetch HubSpot credentials
+    const { data: credential, error: credError } = await supabase
+      .from('enterprise_crm_credentials')
+      .select('credential_data')
+      .eq('enterprise_id', id)
+      .single();
+
+    if (credError || !credential) {
+      return res.status(400).json({
+        success: false,
+        message: 'HubSpot credentials not found for this enterprise',
+        error: credError
+      });
+    }
+
+    const accessToken = credential.credential_data?.accessToken;
+    if (!accessToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'HubSpot access token missing in credential_data',
+        error: credError
+      });
+    }
+
+    // 2. Retrieve existing lead_fields config (to preserve is_selected flags)
+    const { data: existingConfig } = await supabase
+      .from('enterprise_configs')
+      .select('config_data')
+      .eq('enterprise_id', id)
+      .eq('config_type', 'lead_fields')
+      .eq('is_active', true)
+      .maybeSingle();
+
+    const existingFields = existingConfig?.config_data || {};
+
+    // 3. Call HubSpot API to get contact properties
+    const hubspotResp = await axios.get(
+      'https://api.hubapi.com/crm/v3/properties/contacts',
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { archived: false }
+      }
+    );
+
+    const newFieldsObj = {};
+    hubspotResp.data.results.forEach(prop => {
+      newFieldsObj[prop.name] = {
+        label: prop.label || prop.name,
+        type: prop.type,
+        is_selected: existingFields[prop.name]?.is_selected || false
+      };
+    });
+
+    // 4. Upsert lead_fields config with latest keys
+    const { data: config, error } = await supabase
+      .from('enterprise_configs')
+      .upsert({
+        enterprise_id: id,
+        config_type: 'lead_fields',
+        config_data: newFieldsObj,
+        is_active: true
+      }, { onConflict: 'enterprise_id,config_type' })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      message: 'Lead fields refreshed from HubSpot',
+      data: { config }
+    });
+  } catch (error) {
+    console.error('Refresh lead fields error:', error.response?.data || error);
+    res.status(500).json({ success: false, message: 'Error refreshing lead fields' });
+  }
+};
+
 module.exports = {
   createEnterprise,
   getEnterprise,
@@ -484,5 +743,11 @@ module.exports = {
   getEnterpriseConfig,
   updateEnterpriseConfig,
   getEnterpriseUsers,
-  getEnterpriseUserById
+  getEnterpriseUserById,
+  storeLeadFields,
+  getLeadFields,
+  storeQualificationRules,
+  getQualificationRules,
+  getSelectedLeadFields,
+  refreshLeadFieldsFromHubspot
 }; 

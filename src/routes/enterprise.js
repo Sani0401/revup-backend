@@ -33,8 +33,17 @@ const validateEnterpriseCreation = [
 router.post('/create', validateEnterpriseCreation, enterpriseController.createEnterprise);
 router.get('/:id', auth, enterpriseController.getEnterprise);
 router.put('/:id', auth, validateEnterpriseCreation, enterpriseController.updateEnterprise);
-router.get('/:id/config', auth, enterpriseController.getEnterpriseConfig);
-router.put('/:id/config', auth, enterpriseController.updateEnterpriseConfig);
+router.get('/:id/config', auth, enterpriseController.getEnterpriseConfig);  // Need to check if this is needed
+router.put('/:id/config', auth, enterpriseController.updateEnterpriseConfig); // Need to check if this is needed
+// Lead fields
+router.put('/:id/lead-fields', auth, enterpriseController.storeLeadFields);
+router.get('/:id/lead-fields', auth, enterpriseController.getLeadFields);
+router.post('/:id/lead-fields/refresh', auth, enterpriseController.refreshLeadFieldsFromHubspot);
+router.get('/:id/lead-fields/selected', auth, enterpriseController.getSelectedLeadFields);
+
+// Qualification rules
+router.put('/:id/lead-qualification-rules', auth, enterpriseController.storeQualificationRules);
+router.get('/:id/lead-qualification-rules', auth, enterpriseController.getQualificationRules);
 
 // Team management routes
 router.get('/:enterpriseId/users', enterpriseController.getEnterpriseUsers);

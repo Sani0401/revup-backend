@@ -14,6 +14,7 @@ const authRoutes = require('./routes/auth');
 const enterpriseRoutes = require('./routes/enterprise');
 const notificationRoutes = require('./routes/notifications');
 const webhookRoutes = require('./routes/webhook');
+const crmRoutes = require('./routes/crm');
 
 const app = express();
 
@@ -62,6 +63,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/enterprise', enterpriseRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/webhook', webhookRoutes);
+app.use('/api/crm', crmRoutes);
 
 // 404 handler
 app.use(notFound);

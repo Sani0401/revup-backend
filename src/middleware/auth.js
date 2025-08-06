@@ -4,6 +4,8 @@ const { validationResult } = require('express-validator');
 const auth = async (req, res, next) => {
   try {
     // Check for validation errors
+    console.log(req);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -13,7 +15,8 @@ const auth = async (req, res, next) => {
     }
 
     const token = req.header('Authorization')?.replace('Bearer ', '');
-
+    console.log(token);
+    
     if (!token) {
       return res.status(401).json({
         success: false,
