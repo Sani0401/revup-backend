@@ -134,18 +134,53 @@ const verifyLead = async (req, res) => {
     let contactData = {};
     
     if (webhookPayload.subscriptionType === 'contact.creation') {
-      // For now, we'll use a mock contact data since we can't fetch from HubSpot without credentials
-      // In production, you'd fetch the contact data using HubSpot API
-      contactData = {
-        email: 'contact@example.com',
-        firstname: 'Contact',
-        lastname: 'Created',
-        company: 'Example Corp',
-        country: 'US',
-        score: 50
-      };
-      
-      console.log('Using mock contact data for testing');
+      // Get HubSpot credentials for this enterprise
+      const { data: credential, error: credError } = await supabase
+        .from('enterprise_crm_credentials')
+        .select('credential_data')
+        .eq('enterprise_id', enterpriseId)
+        .eq('provider', 'hubspot')
+        .eq('is_active', true)
+        .single();
+
+      if (credError || !credential) {
+        console.error('HubSpot credentials not found for enterprise:', enterpriseId);
+        return res.status(400).json({
+          success: false,
+          message: 'HubSpot credentials not found for this enterprise'
+        });
+      }
+
+      const accessToken = credential.credential_data?.accessToken;
+      if (!accessToken) {
+        console.error('HubSpot access token missing in credentials');
+        return res.status(400).json({
+          success: false,
+          message: 'HubSpot access token missing in credentials'
+        });
+      }
+
+      // Fetch contact data from HubSpot API
+      try {
+        const hubspotResponse = await axios.get(
+          `https://api.hubapi.com/crm/v3/objects/contacts/${webhookPayload.objectId}`,
+          {
+            headers: { 
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        contactData = hubspotResponse.data.properties || {};
+        console.log('Fetched contact data from HubSpot:', contactData);
+      } catch (hubspotError) {
+        console.error('Error fetching contact from HubSpot:', hubspotError.response?.data || hubspotError);
+        return res.status(500).json({
+          success: false,
+          message: 'Error fetching contact data from HubSpot'
+        });
+      }
     } else {
       contactData = extractContactData(webhookPayload);
     }
